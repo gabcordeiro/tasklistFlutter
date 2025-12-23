@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favorites = <WordPair>[];
+  var listaTarefas = <String>[];
 
 
   void getNext() {
@@ -47,7 +48,22 @@ class MyAppState extends ChangeNotifier {
     favorites.remove(pair);
     notifyListeners();
   }
+//tarefas
+    void removeTarefa(String palavra) {
+    listaTarefas.remove(palavra);
+    notifyListeners();
+  }
+  void addTarefa(String palavra) {
+    listaTarefas.add(palavra);
+    notifyListeners();
+  }
 
+  void reorderTarefa(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final item = listaTarefas.removeAt(oldIndex);
+    listaTarefas.insert(newIndex, item);
+    notifyListeners();
+  }
 
 }
 
@@ -73,6 +89,9 @@ class _MyHomePageState extends State<MyHomePage> {
       case 1:
         page = FavoritesPage();
         break;
+      case 2:
+        page = TarefasPage(); 
+        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -92,7 +111,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.favorite),
-                      label: Text('Favorites'),
+                      label: Text('Palavras Salvas'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.task),
+                      label: Text('Tarefas Salvas'),
                     ),
                   ],
                   selectedIndex: selectedIndex,    // ← Change to this.
@@ -119,10 +142,16 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class GeneratorPage extends StatelessWidget {
+  TextEditingController _controller = TextEditingController();
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     var pair = appState.current;
+    final theme = Theme.of(context); 
+    final style = theme.textTheme.bodyMedium!.copyWith(
+  color: theme.colorScheme.onSecondaryFixed,
+  fontSize: 20, );
+
 
     IconData icon;
     if (appState.favorites.contains(pair)) {
@@ -145,22 +174,53 @@ class GeneratorPage extends StatelessWidget {
                   appState.toggleFavorite();
                 },
                 icon: Icon(icon),
-                label: Text('Like'),
+                label: Text('Salvar'),
               ),
+
               SizedBox(width: 10),
               ElevatedButton(
                 onPressed: () {
                   appState.getNext();
                 },
-                child: Text('Next'),
+                child: Text('Proximo'),
               ),
+            
             ],
           ),
+          SizedBox(height: 40),
+          SizedBox(
+            width: 300, // largura desejada
+            child: Text("Salvar Palavra", textAlign: TextAlign.center)),
+          
+          SizedBox(height: 10),
+          SizedBox(
+            width: 300, // largura desejada
+            child: TextField(
+              controller: _controller,
+              style: style,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          SizedBox(height: 10),
+          ElevatedButton.icon(
+                onPressed: () {
+                  appState.addTarefa(_controller.text);
+                  _controller.clear();
+                },
+                icon: Icon(Icons.save),
+                label: Text('Salvar'),
+              ),
         ],
       ),
     );
   }
 }
+
+
+
+
 class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -183,6 +243,71 @@ class FavoritesPage extends StatelessWidget {
   }
 }
 
+class TarefasPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+
+    return Center(
+      child: ReorderableListView(
+        onReorder: (oldIndex, newIndex) {
+      appState.reorderTarefa(oldIndex, newIndex);
+    },
+        padding: const EdgeInsets.all(16),
+        children: [
+        for (final tarefa in appState.listaTarefas)
+          BigCardTarefa(
+            key: ValueKey(tarefa), // chave única obrigatória
+            texto: tarefa,
+          ),
+      ],
+      ),
+    );
+  }
+}
+
+
+class BigCardTarefa extends StatelessWidget {
+  
+  const BigCardTarefa({
+    super.key,
+    required this.texto,
+  });
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+      final theme = Theme.of(context); 
+      var appState = context.watch<MyAppState>();
+      final style = theme.textTheme.bodyMedium!.copyWith(
+  color: theme.colorScheme.onSecondaryFixed,
+  fontSize: 32,
+  
+);    
+    return Card(
+      child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    appState.removeTarefa(texto);
+                  },
+                  icon: Icon(Icons.remove_circle),
+                ),
+                Text(texto,
+                  style: style,
+                  
+                  ),
+                  
+                
+              ],
+              ),
+    );
+  }
+}
+
 class BigCardFavorite extends StatelessWidget {
   
   const BigCardFavorite({
@@ -197,7 +322,7 @@ class BigCardFavorite extends StatelessWidget {
       final theme = Theme.of(context); 
       var appState = context.watch<MyAppState>();
       final style = theme.textTheme.bodyMedium!.copyWith(
-  color: theme.colorScheme.onPrimary,
+  color: theme.colorScheme.onSecondaryFixed,
   fontSize: 32,
   
 );    
@@ -211,16 +336,17 @@ class BigCardFavorite extends StatelessWidget {
                   },
                   icon: Icon(Icons.remove_circle),
                 ),
-                Card(
-                  child: 
-                  Text(texto.asString),
-                ),
+                Text(texto.asString,
+                  style: style,
+                  
+                  ),
+                  
+                
               ],
               ),
     );
   }
 }
-
 
 class BigCard extends StatelessWidget {
   
