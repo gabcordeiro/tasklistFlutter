@@ -9,7 +9,8 @@ O **TaskList** é um ecossistema de aprendizado focado na construção de aplica
 | Tela de Cadastro | Validação de Erros |
 |:---:|:---:|
 | <img src="1.png" width="300"> | <img src="2.png" width="300"> |
-
+| Tela de Adicionar Tarefa | Tela de Mostrar Tarefas |
+| <img src="3.png" width="300"> | <img src="4.png" width="300"> |
 ---
 
 ## 🚀 Funcionalidades Atuais
