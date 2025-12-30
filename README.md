@@ -1,109 +1,52 @@
-# TaskList
+# 📝 TaskList - Estudo de Flutter & Firebase
 
-Aplicação Flutter para estudo e prática de:
-- Gerenciamento de estado com Provider
-- Formulários e validações
-- Navegação entre páginas
-- Organização de código (clean code)
-- Estruturação de widgets Stateless e Stateful
-
-Projeto em evolução, com foco em aprendizado consciente (entender o *porquê* de cada decisão).
+O **TaskList** é um ecossistema de aprendizado focado na construção de aplicações modernas com Flutter. O projeto evoluiu de um gerador de palavras simples para uma aplicação robusta com **autenticação real (Firebase)** e persistência em banco de dados **NoSQL (Firestore)**.
 
 ---
 
-## Funcionalidades atuais
+## 📸 Screenshots (Módulo de Acesso)
 
-- Gerador de palavras aleatórias
-- Lista de favoritos
-- Lista de tarefas com reorder
-- Tela de login (em desenvolvimento)
-- Tela de cadastro com formulário e validações básicas
+| Tela de Cadastro | Validação de Erros |
+|:---:|:---:|
+| <img src="1.png" width="300"> | <img src="2.png" width="300"> |
 
 ---
 
-## Tecnologias utilizadas
+## 🚀 Funcionalidades Atuais
 
-- Flutter
-- Dart
-- Provider (state management)
-- Material 3
-
----
-
-## Estrutura do projeto
-
-# TaskList
-
-Aplicação Flutter para estudo e prática de:
-- Gerenciamento de estado com Provider
-- Formulários e validações
-- Navegação entre páginas
-- Organização de código (clean code)
-- Estruturação de widgets Stateless e Stateful
-
-Projeto em evolução, com foco em aprendizado consciente (entender o *porquê* de cada decisão).
+- [x] **Autenticação com Firebase:** Registro e Login seguro de usuários.
+- [x] **Banco de Dados Real:** Integração com Cloud Firestore.
+- [x] **Gerenciamento de Estado:** Uso do `Provider`.
+- [x] **Interface Responsiva:** Uso de `NavigationRail`.
 
 ---
 
-## Funcionalidades atuais
+## 🧠 Aprendizados Chave
 
-- Gerador de palavras aleatórias
-- Lista de favoritos
-- Lista de tarefas com reorder
-- Tela de login (em desenvolvimento)
-- Tela de cadastro com formulário e validações básicas
+Durante o desenvolvimento, foram aplicados conceitos fundamentais de engenharia de software:
 
----
-
-## Tecnologias utilizadas
-
-- Flutter
-- Dart
-- Provider (state management)
-- Material 3
+* **Async Gaps:** Implementação de `if (!mounted) return;` para evitar erros de contexto em chamadas assíncronas.
+* **Tratamento de Exceções:** Captura de erros de backend (Firebase) e tradução para mensagens amigáveis.
+* **Web Layout:** Ajuste de constraints de largura (`BoxConstraints`) para garantir boa usabilidade.
 
 ---
 
-## Estrutura do projeto
+## 🔧 Como rodar o projeto
 
+Durante o desenvolvimento, foram aplicados conceitos fundamentais de engenharia de software:
+
+* **Instale as dependências:** No terminal, execute: flutter pub get
+
+* **Execute a aplicação:** No terminal, execute: flutter run -d chrome
+
+---
+
+## 🏗 Estrutura do Projeto
+
+```bash
 lib/
-├─ app/
-│ └─ app_state.dart
-├─ pages/
-│ ├─ generator_page.dart
-│ ├─ favorites_page.dart
-│ ├─ tarefas_page.dart
-│ ├─ login_page.dart
-│ └─ cadastrar_page.dart
-├─ widgets/
-│ ├─ big_card.dart
-│ ├─ big_card_favorite.dart
-│ └─ big_card_tarefa.dart
-└─ main.dart
+├─ app/           # Estado (Provider)
+├─ pages/         # Telas (Login, Cadastro, etc)
+├─ widgets/       # Componentes reutilizáveis
+└─ main.dart      # Inicialização
 
-
----
-
-## Objetivo do projeto
-
-Este projeto **não é apenas um app**, mas um ambiente de aprendizado para:
-- Evitar copiar código sem entendimento
-- Compreender o ciclo de vida dos widgets
-- Aprender validação de formulários corretamente
-- Evoluir para autenticação com Firebase futuramente
-
----
-
-## Próximos passos planejados
-
-- Validação completa de formulários
-- Autenticação com Firebase
-- Persistência de dados
-- Refatoração contínua para clean architecture
-
----
-
-## Referências
-
-- Flutter Docs: https://docs.flutter.dev
-- Provider: https://pub.dev/packages/provider
