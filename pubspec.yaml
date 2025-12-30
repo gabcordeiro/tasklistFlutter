@@ -17,6 +17,7 @@ dependencies:
   # USE ESTAS VERSÕES EXATAS (Série Estável 2.x e 4.x)
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
+  cloud_firestore: 4.17.0
   
 dev_dependencies:
   flutter_test:
