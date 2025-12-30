@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "912680189228",
+    "project_id": "flutterlistappkord",
+    "storage_bucket": "flutterlistappkord.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912680189228:android:348e3749800e7c95064089",
+        "android_client_info": {
+          "package_name": "com.example.tasklist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDptnPfFYOT3aBSt8VTxRfP86DDIlD7zkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

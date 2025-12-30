@@ -1,9 +1,6 @@
 name: tasklist
 description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 0.0.1+1
 
@@ -17,10 +14,13 @@ dependencies:
   english_words: ^4.0.0
   provider: ^6.0.0
 
+  # USE ESTAS VERSÕES EXATAS (Série Estável 2.x e 4.x)
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^2.0.0
 
 flutter:

@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 43, 255, 53)),
         ),
-        home: CadastrarPage(),
+        home: const CadastrarPage(), // Dica: coloque 'const' se possível
       ),
     );
   }

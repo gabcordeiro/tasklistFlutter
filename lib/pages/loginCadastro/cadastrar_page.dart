@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
 import 'package:tasklist/pages/loginCadastro/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CadastrarPage extends StatefulWidget {
   const CadastrarPage({super.key});
@@ -73,10 +74,10 @@ class _CadastrarPageState extends State<CadastrarPage> {
     if (_controllerSenha.text != _controllerRepetirSenha.text) {
       return 'As senhas não coincidem';
     }
-        if (_controllerSenha.text == "") {
+    if (_controllerSenha.text == "") {
       return 'Escreva a senha acima primeiro';
     }
-        if (_controllerRepetirSenha.text == "") {
+    if (_controllerRepetirSenha.text == "") {
       return 'Escreva a senha acima primeiro';
     }
     return null;
@@ -150,15 +151,66 @@ class _CadastrarPageState extends State<CadastrarPage> {
                         ),
                         SizedBox(width: 20),
                         ElevatedButton.icon(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              context.read<MyAppState>().estaLogado = true;
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => LoginPage(),
-                                ),
-                              );
+                              try {
+                                // Mostra um indicador de carregamento (opcional, mas bom pra UX)
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                      child: CircularProgressIndicator()),
+                                );
+
+                                await FirebaseAuth.instance
+                                    .createUserWithEmailAndPassword(
+                                  email: _controllerEmail.text.trim(),
+                                  password: _controllerSenha.text,
+                                );
+
+                                // Fecha o loading
+                                if (!mounted) return;
+                                Navigator.of(context).pop();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Usuário criado com sucesso!')),
+                                );
+
+                                // Atualiza estado e navega
+                                context.read<MyAppState>().estaLogado = true;
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const LoginPage()),
+                                );
+                              } catch (e) {
+                                // Solução para erro "JavaScriptObject": Trata tudo como texto
+                                final erroTexto = e.toString();
+                                String mensagem = 'Erro desconhecido.';
+
+                                if (erroTexto.contains('weak-password')) {
+                                  mensagem = 'Senha muito fraca.';
+                                } else if (erroTexto
+                                    .contains('email-already-in-use')) {
+                                  mensagem = 'Email já cadastrado.';
+                                } else if (erroTexto
+                                    .contains('invalid-email')) {
+                                  mensagem = 'Email inválido.';
+                                } else {
+                                  mensagem =
+                                      erroTexto; // Mostra o erro técnico se não for nenhum acima
+                                }
+
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(mensagem),
+                                      backgroundColor: Colors.red),
+                                );
+                                print(e);
+                              }
                             }
                           },
                           icon: Icon(Icons.save),
