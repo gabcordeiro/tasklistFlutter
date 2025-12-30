@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
 import 'package:tasklist/pages/loginCadastro/cadastrar_page.dart';
+import 'package:tasklist/pages/my_home_page.dart';
 
 /// Tela responsável pelo login do usuário utilizando E-mail e Senha.
 class LoginPage extends StatefulWidget {
@@ -59,7 +60,9 @@ class _LoginPageState extends State<LoginPage> {
 
       // Navega para a tela inicial, removendo a tela de login da pilha (para não voltar ao login)
       // Ajuste para a rota correta da sua Home se necessário.
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => MyHomePage()),
+      );
     } catch (e) {
       // --- TRATAMENTO DE ERRO ---
 
@@ -104,11 +107,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Entrar')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
-          child: Container(
+          child: SizedBox(
             width: 400,
             child: Center(
               // SingleChildScrollView evita erro de pixel overflow se o teclado subir
@@ -121,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                       const Icon(Icons.lock_person,
                           size: 80, color: Colors.deepPurple),
                       const SizedBox(height: 20),
-            
+
                       // Campo de E-mail
                       TextFormField(
                         controller: _emailController,
@@ -140,9 +142,9 @@ class _LoginPageState extends State<LoginPage> {
                           return null;
                         },
                       ),
-            
+
                       const SizedBox(height: 16),
-            
+
                       // Campo de Senha
                       TextFormField(
                         controller: _senhaController,
@@ -160,9 +162,9 @@ class _LoginPageState extends State<LoginPage> {
                           return null;
                         },
                       ),
-            
+
                       const SizedBox(height: 24),
-            
+
                       // Botão de Entrar (mostra loading ou o botão normal)
                       if (_isLoading)
                         const CircularProgressIndicator()
@@ -170,7 +172,8 @@ class _LoginPageState extends State<LoginPage> {
                         Column(
                           children: [
                             SizedBox(
-                              width: double.infinity, // Botão ocupa a largura toda
+                              width:
+                                  double.infinity, // Botão ocupa a largura toda
                               height: 50,
                               child: ElevatedButton(
                                 onPressed: _fazerLogin,
@@ -182,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-            
+
                             // Link para tela de cadastro
                             TextButton(
                               onPressed: () {

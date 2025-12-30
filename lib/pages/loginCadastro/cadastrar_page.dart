@@ -46,7 +46,6 @@ class _CadastrarPageState extends State<CadastrarPage> {
   }
 String? validatorNome(String? value) {
     if (value == null || value.isEmpty) return 'Esse campo é obrigatório';
-    if (value.contains(' ')) return 'Nome não deve conter espaços';
     if (value.length <= 4) return 'Nome deve ter mais de 4 caracteres';
     return null;
   }
@@ -169,7 +168,7 @@ String? validatorNome(String? value) {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Container(
+        child: SizedBox(
           width: 400,
           child: Center(
             // SingleChildScrollView evita erro de tela cortada se o teclado subir
@@ -282,7 +281,7 @@ String? validatorNome(String? value) {
                             ElevatedButton.icon(
                               // Chama a função separada que criamos acima
                               onPressed: _realizarCadastro,
-                              icon: const Icon(Icons.save),
+                              icon: const Icon(Icons.person_add),
                               label: const Text('Cadastrar'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,

@@ -19,6 +19,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
     _controller.dispose();
     super.dispose();
   }
+  @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     var pair = appState.current;
@@ -81,7 +82,8 @@ class _GeneratorPageState extends State<GeneratorPage> {
           SizedBox(height: 10),
           ElevatedButton.icon(
                 onPressed: () {
-                  appState.addTarefa(_controller.text);
+                  //appState.addTarefa(_controller.text);
+                  appState.salvarTarefaNoFirebase(_controller.text);
                   _controller.clear();
                 },
                 icon: Icon(Icons.save),

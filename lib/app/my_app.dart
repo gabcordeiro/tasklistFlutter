@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
 import 'package:tasklist/pages/loginCadastro/cadastrar_page.dart';
+import 'package:tasklist/pages/loginCadastro/login_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 43, 255, 53)),
         ),
-        home: const CadastrarPage(), // Dica: coloque 'const' se possível
+        home: const LoginPage(), // Dica: coloque 'const' se possível
       ),
     );
   }

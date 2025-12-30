@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
@@ -29,7 +30,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Desconectado!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Desconectado!'), backgroundColor: Colors.green),
         );
 
         context.read<MyAppState>().estaLogado = false;
@@ -41,7 +43,8 @@ class _MyHomePageState extends State<MyHomePage> {
         if (mounted && Navigator.canPop(context)) Navigator.of(context).pop();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao deslogar'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Erro ao deslogar'), backgroundColor: Colors.red),
         );
       }
     }
@@ -51,10 +54,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     Widget page;
     switch (selectedIndex) {
-      case 0: page = GeneratorPage(); break;
-      case 1: page = FavoritesPage(); break;
-      case 2: page = TarefasPage(); break;
-      default: throw UnimplementedError('no widget for $selectedIndex');
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = FavoritesPage();
+        break;
+      case 2:
+        page = TarefasPage();
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
     }
 
     return LayoutBuilder(
@@ -75,11 +85,46 @@ class _MyHomePageState extends State<MyHomePage> {
                         const CircleAvatar(
                           radius: 25,
                           backgroundColor: Colors.deepPurple,
-                          child: Icon(Icons.person, color: Colors.white, size: 30),
+                          child:
+                              Icon(Icons.person, color: Colors.white, size: 30),
                         ),
                         if (isExtended) ...[
                           const SizedBox(height: 8),
-                          const Text("Meu Perfil", style: TextStyle(fontWeight: FontWeight.bold)),
+                          FutureBuilder<DocumentSnapshot>(
+                            // 1. Aponta para o documento do usuário logado usando o UID
+                            future: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser?.uid)
+                                .get(),
+                            builder: (context, snapshot) {
+                              // 2. Enquanto está carregando o dado do banco
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Text("Carregando...",
+                                    style: TextStyle(fontSize: 12));
+                              }
+
+                              // 3. Se houver erro ou o documento não existir
+                              if (snapshot.hasError ||
+                                  !snapshot.hasData ||
+                                  !snapshot.data!.exists) {
+                                return const Text("Bem-vindo!",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold));
+                              }
+
+                              // 4. Pega os dados do documento
+                              var userData =
+                                  snapshot.data!.data() as Map<String, dynamic>;
+                              String nome = userData['nome'] ?? 'Usuário';
+
+                              return Text(
+                                "Bem-vindo, $nome",
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              );
+                            },
+                          ),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -92,7 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.logout, size: 20, color: Colors.red),
+                                icon: const Icon(Icons.logout,
+                                    size: 20, color: Colors.red),
                                 tooltip: "Sair",
                                 onPressed: _logOut,
                               ),
