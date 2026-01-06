@@ -1,18 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:tasklist/app/app_state.dart'; // Certifique-se que o caminho está correto
+import 'package:audioplayers/audioplayers.dart';
+import 'package:tasklist/app/app_state.dart';
 
-class MusicCard extends StatelessWidget {
+class MusicCard extends StatefulWidget {
   final Music musica;
 
-  const MusicCard({
-    super.key,
-    required this.musica,
-  });
+  const MusicCard({super.key, required this.musica});
+
+  @override
+  State<MusicCard> createState() => _MusicCardState();
+}
+
+class _MusicCardState extends State<MusicCard> {
+  final AudioPlayer _player = AudioPlayer();
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listener para detectar quando a música acabar sozinha
+    _player.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose(); // Limpeza de memória
+    super.dispose();
+  }
+
+  Future<void> _togglePlay() async {
+    try {
+      if (_isPlaying) {
+        await _player.stop();
+      } else {
+        // widget.musica.musicPath contém a URL do Cloudinary salva no Firestore
+        await _player.play(UrlSource(widget.musica.musicPath));
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPlaying = !_isPlaying;
+        });
+      }
+    } catch (e) {
+      debugPrint("Erro ao reproduzir áudio: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erro ao carregar o áudio.")),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
     final style = theme.textTheme.titleMedium!.copyWith(
       color: theme.colorScheme.onSecondaryContainer,
       fontWeight: FontWeight.bold,
@@ -26,37 +74,34 @@ class MusicCard extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
-            // Botão de Play
             IconButton(
-              icon: const Icon(Icons.play_circle_fill, size: 45, color: Colors.blue),
-              onPressed: () {
-                // No futuro, o audioplayers entrará aqui
-                debugPrint("Tocando agora: ${musica.titulo}");
-                debugPrint("URL: ${musica.musicPath}");
-              },
+              icon: Icon(
+                _isPlaying ? Icons.stop_circle : Icons.play_circle_fill,
+                size: 45,
+                color: _isPlaying ? Colors.red : Colors.blue,
+              ),
+              onPressed: _togglePlay,
             ),
             const SizedBox(width: 12),
-            // Informações da Música
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    musica.titulo,
+                    widget.musica.titulo,
                     style: style,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const Text(
-                    "Toque para reproduzir",
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    _isPlaying ? "Reproduzindo..." : "Toque para reproduzir",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
             ),
-            // Botão de Opções/Remover
             IconButton(
               onPressed: () {
-                // Lógica de deletar do Firebase no futuro
+                // Futura implementação de menu (deletar, etc)
               },
               icon: const Icon(Icons.more_vert, color: Colors.grey),
             ),
