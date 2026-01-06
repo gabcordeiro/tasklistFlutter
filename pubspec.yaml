@@ -21,8 +21,8 @@ dependencies:
   file_picker: ^8.0.7
   ffmpeg_kit_flutter_audio: ^6.0.3
   path_provider: ^2.1.5
-  firebase_storage: ^11.7.7
   audioplayers: ^6.5.1
+  cloudinary_public: ^0.23.1
   
 dev_dependencies:
   flutter_test:
