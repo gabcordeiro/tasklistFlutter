@@ -18,6 +18,10 @@ dependencies:
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
   cloud_firestore: 4.17.0
+  file_picker: ^8.0.7
+  ffmpeg_kit_flutter_audio: ^6.0.3
+  path_provider: ^2.1.5
+  firebase_storage: ^11.7.7
   
 dev_dependencies:
   flutter_test:

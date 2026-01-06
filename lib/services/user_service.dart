@@ -5,7 +5,7 @@ class UserService  {
  
 
   String nomeUsuario = 'carregando...';
-  Future<String> fetchUserData() async {
+  Future<String> fetchUserName() async {
     // Lógica para pegar o nome do usuário do Firebase
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -23,4 +23,7 @@ class UserService  {
       return 'Usuário';
     }
   }
+
+
+
 }

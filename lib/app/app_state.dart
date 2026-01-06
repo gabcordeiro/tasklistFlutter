@@ -91,7 +91,7 @@ class MyAppState extends ChangeNotifier {
   }
 
   Future<void> carregarNomeUsuario() async {
-    usuario = await userService.fetchUserData();
+    usuario = await userService.fetchUserName();
     notifyListeners();
   }
 
@@ -115,9 +115,7 @@ class MyAppState extends ChangeNotifier {
       });
       listaAnotation.add(textoAnotation.isNotEmpty
           ? Anotation(id: docRef.id, titulo: textoAnotation)
-          : Anotation(id: docRef.id, titulo: 'Sem título'));  
-      // Adiciona a anotação na lista local
-      // (Aqui você pode querer criar uma lista de anotações similar à lista de tarefas)
+          : Anotation(id: docRef.id, titulo: 'Sem título'));  // Adiciona a anotação na lista local
       notifyListeners();
     }
   }
@@ -126,7 +124,7 @@ class MyAppState extends ChangeNotifier {
   final usuarioUid = FirebaseAuth.instance.currentUser;
 
   if (usuarioUid != null) {
-    final snapshot = await FirebaseFirestore.instance.collection('usuario').doc(usuarioUid.uid).collection('anotation').get();
+    final snapshot = await FirebaseFirestore.instance.collection('usuario').doc(usuarioUid.uid).collection('anotations').get();
 
 
     listaAnotation.clear();
