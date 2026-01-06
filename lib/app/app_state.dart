@@ -18,8 +18,18 @@ class Anotation {
   Anotation({required this.id, required this.titulo});
 }
 
+class Music {
+  final String id; // O código único do Firestore (Ex: 4qIKyw...)
+  final String titulo; // O texto visível (Ex: asd)
+  final String musicPath; // O texto visível (Ex: asd)
+
+  Music({required this.id, required this.titulo, required this.musicPath});
+}
+
+
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+
   var favorites = <WordPair>[];
 
   var listaTarefas = <Tarefa>[];
@@ -27,6 +37,8 @@ class MyAppState extends ChangeNotifier {
   var listaAnotation = <Anotation>[];
 
   var userService = UserService();
+
+  var listamusicas = <Music>[];
 
   MyAppState() {
     // Assim que o Provider nasce, ele tenta carregar os dados
@@ -36,6 +48,32 @@ class MyAppState extends ChangeNotifier {
   String usuario = 'Usuário';
 
   bool estaLogado = false;
+
+//musicas
+Future<void> carregarMusicasDoFirebase() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    // No seu MusicService você salvou em 'playlist', então vamos ler de 'playlist'
+    final snapshot = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(user.uid)
+        .collection('playlist') // Ajustado para o nome que usamos no upload
+        .orderBy('criadoEm', descending: true)
+        .get();
+
+    listamusicas.clear();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      listamusicas.add(Music(
+        id: doc.id,
+        titulo: data['nome'] ?? 'Sem título',
+        musicPath: data['url'] ?? '', // Aqui guardamos o link do Storage!
+      ));
+    }
+    notifyListeners();
+  }
+}
 
 //usuario
   Future<void> salvarTarefaNoFirebase(String textoTarefa) async {
@@ -110,7 +148,7 @@ class MyAppState extends ChangeNotifier {
           .doc();
 
       await docRef.set({
-        'textoBancoAnotation': textoAnotation,
+        'titulo': textoAnotation,
         'criadoEm': Timestamp.now(),
       });
       listaAnotation.add(textoAnotation.isNotEmpty
