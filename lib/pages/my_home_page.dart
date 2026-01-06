@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
+import 'package:tasklist/pages/anotation/anotation_create.dart';
+import 'package:tasklist/pages/anotation/anotation_list_view.dart';
 import 'package:tasklist/pages/favorites_page.dart';
 import 'package:tasklist/pages/generator_page.dart';
 import 'package:tasklist/pages/loginCadastro/login_page.dart';
@@ -49,10 +50,17 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
   }
-
+@override
+void initState() {
+  super.initState();
+  // Isso dispara a busca UMA VEZ ao abrir a tela
+  context.read<MyAppState>().carregarNomeUsuario();
+}
   @override
   Widget build(BuildContext context) {
     Widget page;
+
+ 
     switch (selectedIndex) {
       case 0:
         page = GeneratorPage();
@@ -62,6 +70,12 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
       case 2:
         page = TarefasPage();
+        break;
+      case 3:
+        page = AnotationCreate();
+        break;
+      case 4:
+        page = AnotationList();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -90,41 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         if (isExtended) ...[
                           const SizedBox(height: 8),
-                          FutureBuilder<DocumentSnapshot>(
-                            // 1. Aponta para o documento do usuário logado usando o UID
-                            future: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(FirebaseAuth.instance.currentUser?.uid)
-                                .get(),
-                            builder: (context, snapshot) {
-                              // 2. Enquanto está carregando o dado do banco
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Text("Carregando...",
-                                    style: TextStyle(fontSize: 12));
-                              }
-
-                              // 3. Se houver erro ou o documento não existir
-                              if (snapshot.hasError ||
-                                  !snapshot.hasData ||
-                                  !snapshot.data!.exists) {
-                                return const Text("Bem-vindo!",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold));
-                              }
-
-                              // 4. Pega os dados do documento
-                              var userData =
-                                  snapshot.data!.data() as Map<String, dynamic>;
-                              String nome = userData['nome'] ?? 'Usuário';
-
-                              return Text(
-                                "Bem-vindo, $nome",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              );
-                            },
-                          ),
+                                Text(context.select<MyAppState, String>((s) => s.usuario)),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -166,6 +146,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     NavigationRailDestination(
                       icon: Icon(Icons.task),
                       label: Text('Tarefas Salvas'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.create),
+                      label: Text('Criar Anotações'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.list),
+                      label: Text('Listar Anotações'),
                     ),
                   ],
                   selectedIndex: selectedIndex,
