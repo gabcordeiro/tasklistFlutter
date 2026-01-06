@@ -26,7 +26,6 @@ class Music {
   Music({required this.id, required this.titulo, required this.musicPath});
 }
 
-
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
 
@@ -50,30 +49,37 @@ class MyAppState extends ChangeNotifier {
   bool estaLogado = false;
 
 //musicas
-Future<void> carregarMusicasDoFirebase() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    // No seu MusicService você salvou em 'playlist', então vamos ler de 'playlist'
-    final snapshot = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(user.uid)
-        .collection('playlist') // Ajustado para o nome que usamos no upload
-        .orderBy('criadoEm', descending: true)
-        .get();
+  bool estaCarregandoMusica = false;
 
-    listamusicas.clear();
-
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      listamusicas.add(Music(
-        id: doc.id,
-        titulo: data['nome'] ?? 'Sem título',
-        musicPath: data['url'] ?? '', // Aqui guardamos o link do Storage!
-      ));
-    }
+  void setCarregando(bool valor) {
+    estaCarregandoMusica = valor;
     notifyListeners();
   }
-}
+
+  Future<void> carregarMusicasDoFirebase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // No seu MusicService você salvou em 'playlist', então vamos ler de 'playlist'
+      final snapshot = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(user.uid)
+          .collection('playlist') // Ajustado para o nome que usamos no upload
+          .orderBy('criadoEm', descending: true)
+          .get();
+
+      listamusicas.clear();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        listamusicas.add(Music(
+          id: doc.id,
+          titulo: data['nome'] ?? 'Sem título',
+          musicPath: data['url'] ?? '', // Aqui guardamos o link do Storage!
+        ));
+      }
+      notifyListeners();
+    }
+  }
 
 //usuario
   Future<void> salvarTarefaNoFirebase(String textoTarefa) async {
@@ -153,30 +159,31 @@ Future<void> carregarMusicasDoFirebase() async {
       });
       listaAnotation.add(textoAnotation.isNotEmpty
           ? Anotation(id: docRef.id, titulo: textoAnotation)
-          : Anotation(id: docRef.id, titulo: 'Sem título'));  // Adiciona a anotação na lista local
+          : Anotation(
+              id: docRef.id,
+              titulo: 'Sem título')); // Adiciona a anotação na lista local
       notifyListeners();
     }
   }
 
   Future<void> carregarAnotation() async {
-  final usuarioUid = FirebaseAuth.instance.currentUser;
+    final usuarioUid = FirebaseAuth.instance.currentUser;
 
-  if (usuarioUid != null) {
-    final snapshot = await FirebaseFirestore.instance.collection('usuario').doc(usuarioUid.uid).collection('anotations').get();
+    if (usuarioUid != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('usuario')
+          .doc(usuarioUid.uid)
+          .collection('anotations')
+          .get();
 
-
-    listaAnotation.clear();
-    for (var snap in snapshot.docs) {
-      final dataSnap = snap.data();
-      listaAnotation.add(Anotation(id: snap.id, titulo: dataSnap['titulo']));
+      listaAnotation.clear();
+      for (var snap in snapshot.docs) {
+        final dataSnap = snap.data();
+        listaAnotation.add(Anotation(id: snap.id, titulo: dataSnap['titulo']));
+      }
+      notifyListeners();
     }
-    notifyListeners();
-
   }
-
-
-
-}
 
 //palavras favoritas
   void getNext() {
