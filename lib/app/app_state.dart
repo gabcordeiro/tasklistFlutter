@@ -64,86 +64,74 @@ class MyAppState extends ChangeNotifier {
 
   // No MyAppState em app_state.dart
 
-  Future<void> carregarMusicasDoFirebase() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      // No seu MusicService você salvou em 'playlist', então vamos ler de 'playlist'
-      final snapshot = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(user.uid)
-          .collection('playlist') // Ajustado para o nome que usamos no upload
-          .orderBy('criadoEm', descending: true)
-          .get();
+// No seu MyAppState em app_state.dart
 
-      listamusicas.clear();
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        listamusicas.add(Music(
-          id: doc.id,
-          titulo: data['nome'] ?? 'Sem título',
-          musicPath: data['url'] ?? '',
-          artista: data['artista'] ??
-              'Você', // Se não tiver artista, assume que fui eu
-        ));
-      }
-      notifyListeners();
-    }
-  }
-
-  Future<void> carregarFeedGlobal() async {
+Future<void> carregarMusicasDoFirebase() async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return;
 
-  setCarregando(true); // Ativa o spinner na tela
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('usuarios') // Verifique se no banco é 'usuarios' com u minúsculo
+        .doc(user.uid)
+        .collection('playlist')
+        .get();
+
+    listamusicas.clear();
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      listamusicas.add(Music(
+        id: doc.id,
+        titulo: data['nome'] ?? 'Sem título',
+        musicPath: data['url'] ?? '',
+        artista: data['artista'] ?? 'Você',
+      ));
+    }
+    notifyListeners(); // IMPORTANTE: Faz a tela "Listar Beats" atualizar
+  } catch (e) {
+    print("Erro ao carregar minhas musicas: $e");
+  }
+}
+
+Future<void> carregarFeedGlobal() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
   try {
-    // 1. Coleta IDs para ignorar (O que você já curtiu ou deu dislike)
-    final dislikesSnapshot = await FirebaseFirestore.instance
+    // 1. IDs para ignorar
+    final dislikes = await FirebaseFirestore.instance
         .collection('usuarios').doc(user.uid).collection('dislikes').get();
-
-    final likesSnapshot = await FirebaseFirestore.instance
+    final minhas = await FirebaseFirestore.instance
         .collection('usuarios').doc(user.uid).collection('playlist').get();
 
-    final idsIgnorados = <String>{};
-    for (var doc in dislikesSnapshot.docs) idsIgnorados.add(doc['musicId']);
-    for (var doc in likesSnapshot.docs) idsIgnorados.add(doc['url']);
+    final ignorar = <String>{};
+    for (var d in dislikes.docs) ignorar.add(d['url']);
+    for (var m in minhas.docs) ignorar.add(m['url']);
 
-    // 2. Busca Global em todas as coleções 'playlist'
+    // 2. Busca Global
     final snapshot = await FirebaseFirestore.instance
         .collectionGroup('playlist')
-        .limit(50)
         .get();
 
     feedMusicas.clear();
-
     for (var doc in snapshot.docs) {
       final data = doc.data();
       final url = data['url'] ?? '';
-      
-      // Identifica o dono da música pelo caminho: usuarios/{UID}/playlist/{DOC}
-      final donoId = doc.reference.parent.parent?.id;
 
-      // FILTROS: 
-      // - Não ser música do próprio usuário
-      // - Não estar nos ignorados (dislikes)
-      // - Não estar nos curtidos (likes)
-      if (donoId == user.uid || idsIgnorados.contains(doc.id) || idsIgnorados.contains(url)) {
-        continue;
-      }
+      // Se eu já tenho essa música ou dei dislike, pula
+      if (ignorar.contains(url)) continue;
 
       feedMusicas.add(Music(
         id: doc.id,
         titulo: data['nome'] ?? 'Sem Título',
         musicPath: url,
-        artista: data['artista'] ?? 'Artista da Comunidade',
+        artista: data['artista'] ?? 'Produtor',
       ));
     }
   } catch (e) {
-    debugPrint("Erro ao carregar feed global: $e");
+    print("Erro no Feed: $e");
   } finally {
-    setCarregando(false); // Desativa o spinner
-    notifyListeners();
+    notifyListeners(); // Faz o "Procurando novos beats" sumir e mostrar os cards
   }
 }
 

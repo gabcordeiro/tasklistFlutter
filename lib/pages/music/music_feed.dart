@@ -29,7 +29,8 @@ class _MusicFeedState extends State<MusicFeed> {
 
   @override
   void dispose() {
-    _player.dispose(); // Para a música ao sair da tela para não ficar tocando no fundo
+    _player
+        .dispose(); // Para a música ao sair da tela para não ficar tocando no fundo
     controller.dispose();
     super.dispose();
   }
@@ -105,15 +106,16 @@ class _MusicFeedState extends State<MusicFeed> {
             Expanded(
               child: CardSwiper(
                 controller: controller,
+                // Se tiver menos de 3 musicas, mostra apenas o que tem, senão mostra 3
+                numberOfCardsDisplayed: musicas.length < 3 ? musicas.length : 3,
                 cardsCount: musicas.length,
-                numberOfCardsDisplayed: 3, // Efeito de pilha de cartas
-
-                // O que acontece quando arrasta (Like/Dislike)
                 onSwipe: (previousIndex, currentIndex, direction) {
                   _player.stop();
-                  
+
                   // Reseta o ícone para play enquanto carrega a próxima
-                  setState(() { _isPlaying = false; }); 
+                  setState(() {
+                    _isPlaying = false;
+                  });
 
                   final musicaAtual = musicas[previousIndex];
 
@@ -140,12 +142,15 @@ class _MusicFeedState extends State<MusicFeed> {
                 },
 
                 // Desenha o Cartão
-                cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                cardBuilder:
+                    (context, index, percentThresholdX, percentThresholdY) {
                   final musica = musicas[index];
-                  
+
                   // Toca a primeira música automaticamente se o player estiver parado
                   // e for o primeiro card da pilha
-                  if (index == 0 && _player.state != PlayerState.playing && _player.state != PlayerState.paused) {
+                  if (index == 0 &&
+                      _player.state != PlayerState.playing &&
+                      _player.state != PlayerState.paused) {
                     _tocarPreview(musica.musicPath);
                   }
 
@@ -164,13 +169,16 @@ class _MusicFeedState extends State<MusicFeed> {
                     heroTag: "dislike",
                     backgroundColor: Colors.red,
                     onPressed: () => controller.swipe(CardSwiperDirection.left),
-                    child: const Icon(Icons.close, color: Colors.white, size: 30),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 30),
                   ),
                   FloatingActionButton(
                     heroTag: "like",
                     backgroundColor: Colors.green, // Cor do "Like"
-                    onPressed: () => controller.swipe(CardSwiperDirection.right),
-                    child: const Icon(Icons.favorite, color: Colors.white, size: 30),
+                    onPressed: () =>
+                        controller.swipe(CardSwiperDirection.right),
+                    child: const Icon(Icons.favorite,
+                        color: Colors.white, size: 30),
                   ),
                 ],
               ),
@@ -192,11 +200,7 @@ class _MusicFeedState extends State<MusicFeed> {
           colors: [Colors.blueGrey[900]!, Colors.black],
         ),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black54, 
-            blurRadius: 10, 
-            offset: Offset(0, 5)
-          )
+          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 5))
         ],
         border: Border.all(color: Colors.white10),
       ),
@@ -204,7 +208,8 @@ class _MusicFeedState extends State<MusicFeed> {
         children: [
           // 1. Ícone de fundo (decoração)
           Center(
-            child: Icon(Icons.music_note, size: 150, color: Colors.white.withOpacity(0.05)),
+            child: Icon(Icons.music_note,
+                size: 150, color: Colors.white.withOpacity(0.05)),
           ),
 
           // 2. Botão de Play/Pause Centralizado
@@ -214,13 +219,15 @@ class _MusicFeedState extends State<MusicFeed> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.black45,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white30, width: 2),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)
-                  ]
-                ),
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          spreadRadius: 2)
+                    ]),
                 child: Icon(
                   _isPlaying ? Icons.pause : Icons.play_arrow_rounded,
                   size: 60,
@@ -237,16 +244,14 @@ class _MusicFeedState extends State<MusicFeed> {
               width: double.infinity,
               padding: const EdgeInsets.all(24.0),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black, Colors.transparent],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20)
-                )
-              ),
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black, Colors.transparent],
+                  ),
+                  borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20))),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,15 +268,15 @@ class _MusicFeedState extends State<MusicFeed> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.person, color: Colors.blueAccent, size: 20),
+                      const Icon(Icons.person,
+                          color: Colors.blueAccent, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         musica.artista,
                         style: const TextStyle(
-                          color: Colors.blueAccent, 
-                          fontSize: 18, 
-                          fontWeight: FontWeight.w500
-                        ),
+                            color: Colors.blueAccent,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
