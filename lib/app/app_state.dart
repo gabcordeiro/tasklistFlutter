@@ -22,8 +22,12 @@ class Music {
   final String id; // O código único do Firestore (Ex: 4qIKyw...)
   final String titulo; // O texto visível (Ex: asd)
   final String musicPath; // O texto visível (Ex: asd)
-
-  Music({required this.id, required this.titulo, required this.musicPath});
+  final String artista; // <--- NOVO CAMPO
+  Music(
+      {required this.id,
+      required this.titulo,
+      required this.musicPath,
+      this.artista = 'Desconhecido'});
 }
 
 class MyAppState extends ChangeNotifier {
@@ -48,10 +52,11 @@ class MyAppState extends ChangeNotifier {
 
   bool estaLogado = false;
 
-//musicas
+  //musicas
   bool estaCarregandoMusica = false;
 
   var feedMusicas = <Music>[];
+
   void setCarregando(bool valor) {
     estaCarregandoMusica = valor;
     notifyListeners();
@@ -77,7 +82,9 @@ class MyAppState extends ChangeNotifier {
         listamusicas.add(Music(
           id: doc.id,
           titulo: data['nome'] ?? 'Sem título',
-          musicPath: data['url'] ?? '', // Aqui guardamos o link do Storage!
+          musicPath: data['url'] ?? '',
+          artista: data['artista'] ??
+              'Você', // Se não tiver artista, assume que fui eu
         ));
       }
       notifyListeners();
@@ -85,34 +92,62 @@ class MyAppState extends ChangeNotifier {
   }
 
   Future<void> carregarFeedGlobal() async {
-    try {
-      // collectionGroup busca em todas as subcoleções chamadas 'playlist'
-      final snapshot = await FirebaseFirestore.instance
-          .collectionGroup('playlist')
-          .limit(20) // Limita para não gastar muita banda
-          .get();
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-      feedMusicas.clear();
+  setCarregando(true); // Ativa o spinner na tela
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        feedMusicas.add(
-          Music(
-            id: doc.id,
-            titulo: data['nome'] ?? 'Sem título',
-            musicPath: data['url'] ?? '',
-          ),
-        );
+  try {
+    // 1. Coleta IDs para ignorar (O que você já curtiu ou deu dislike)
+    final dislikesSnapshot = await FirebaseFirestore.instance
+        .collection('usuarios').doc(user.uid).collection('dislikes').get();
+
+    final likesSnapshot = await FirebaseFirestore.instance
+        .collection('usuarios').doc(user.uid).collection('playlist').get();
+
+    final idsIgnorados = <String>{};
+    for (var doc in dislikesSnapshot.docs) idsIgnorados.add(doc['musicId']);
+    for (var doc in likesSnapshot.docs) idsIgnorados.add(doc['url']);
+
+    // 2. Busca Global em todas as coleções 'playlist'
+    final snapshot = await FirebaseFirestore.instance
+        .collectionGroup('playlist')
+        .limit(50)
+        .get();
+
+    feedMusicas.clear();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final url = data['url'] ?? '';
+      
+      // Identifica o dono da música pelo caminho: usuarios/{UID}/playlist/{DOC}
+      final donoId = doc.reference.parent.parent?.id;
+
+      // FILTROS: 
+      // - Não ser música do próprio usuário
+      // - Não estar nos ignorados (dislikes)
+      // - Não estar nos curtidos (likes)
+      if (donoId == user.uid || idsIgnorados.contains(doc.id) || idsIgnorados.contains(url)) {
+        continue;
       }
 
-      // Avisa as telas que a lista de feed mudou
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Erro ao carregar feed: $e");
+      feedMusicas.add(Music(
+        id: doc.id,
+        titulo: data['nome'] ?? 'Sem Título',
+        musicPath: url,
+        artista: data['artista'] ?? 'Artista da Comunidade',
+      ));
     }
+  } catch (e) {
+    debugPrint("Erro ao carregar feed global: $e");
+  } finally {
+    setCarregando(false); // Desativa o spinner
+    notifyListeners();
   }
+}
 
-// 3. O método para dar Like (Favoritar)
+// Função do botão "Coração" (Like) - Atualizada com Artista
   Future<void> curtirMusica(Music musica) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -120,15 +155,39 @@ class MyAppState extends ChangeNotifier {
     await FirebaseFirestore.instance
         .collection('usuarios')
         .doc(user.uid)
-        .collection('playlist') // Salva na playlist pessoal do usuário
+        .collection('playlist')
         .add({
       'nome': musica.titulo,
       'url': musica.musicPath,
+      'artista': musica.artista, // <--- Salva o artista
       'curtidoEm': Timestamp.now(),
+      'origem': 'feed'
     });
 
-    // Opcional: recarrega a lista local de tarefas/músicas se necessário
-    carregarMusicasDoFirebase();
+    // Remove do feed pois já foi salva
+    feedMusicas.remove(musica);
+    notifyListeners();
+  }
+
+// Função do botão "X" (Dislike)
+  Future<void> descurtirMusica(Music musica) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Salva apenas o ID para nunca mais mostrar
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(user.uid)
+        .collection('dislikes')
+        .add({
+      'musicId': musica.id,
+      'url': musica.musicPath,
+      'data': Timestamp.now(),
+    });
+
+    // Remove da lista local instantaneamente
+    feedMusicas.remove(musica);
+    notifyListeners();
   }
 
 //usuario

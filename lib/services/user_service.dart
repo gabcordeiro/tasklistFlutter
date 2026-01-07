@@ -10,7 +10,7 @@ class UserService  {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('usuarios')
           .doc(user.uid)
           .get();
       if (doc.exists) {

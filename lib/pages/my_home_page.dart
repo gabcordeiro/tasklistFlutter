@@ -8,6 +8,7 @@ import 'package:tasklist/pages/generator_page.dart';
 import 'package:tasklist/pages/loginCadastro/login_page.dart';
 import 'package:tasklist/pages/music/music_feed.dart';
 import 'package:tasklist/pages/music/music_list.dart';
+import 'package:tasklist/pages/music/music_saved_beats_page.dart';
 import 'package:tasklist/pages/music/music_upload.dart';
 import 'package:tasklist/pages/tarefas_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -88,6 +89,9 @@ void initState() {
         break;
       case 7:
         page = MusicFeed();
+        break;
+      case 8:
+        page = SavedBeatsPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -178,6 +182,10 @@ void initState() {
                     NavigationRailDestination(
                       icon: Icon(Icons.feed),
                       label: Text('Feed de Beats'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.feed),
+                      label: Text('Beats Salvos'),
                     ),
                   ],
                   selectedIndex: selectedIndex,

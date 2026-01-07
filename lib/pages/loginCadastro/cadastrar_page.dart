@@ -44,19 +44,21 @@ class _CadastrarPageState extends State<CadastrarPage> {
     if (value.length <= 6) return 'Senha deve ter mais de 6 caracteres';
     return null;
   }
-String? validatorNome(String? value) {
+
+  String? validatorNome(String? value) {
     if (value == null || value.isEmpty) return 'Esse campo é obrigatório';
     if (value.length <= 4) return 'Nome deve ter mais de 4 caracteres';
     return null;
   }
+
   String? validatorEmail(String? value) {
     if (value == null || value.isEmpty) return 'Esse campo é obrigatório';
     if (value.contains(' ')) return 'Email não deve conter espaços';
-    
+
     // Expressão regular (Regex) para validar formato de e-mail padrão
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     if (!emailRegex.hasMatch(value)) return 'Email inválido';
-    
+
     return null;
   }
 
@@ -78,7 +80,6 @@ String? validatorNome(String? value) {
   Future<void> _realizarCadastro() async {
     // 1. Verifica se o formulário é válido (se todos os campos estão ok)
     if (_formKey.currentState!.validate()) {
-      
       // Mostra o diálogo de carregamento (Loading...)
       showDialog(
         context: context,
@@ -88,23 +89,22 @@ String? validatorNome(String? value) {
 
       try {
         // 2. Tenta criar o usuário no Firebase (Operação demorada - await)
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _controllerEmail.text.trim(), // .trim() remove espaços nas pontas
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email:
+              _controllerEmail.text.trim(), // .trim() remove espaços nas pontas
           password: _controllerSenha.text,
         );
 
-
-
         String uuid = FirebaseAuth.instance.currentUser!.uid;
 
-        await FirebaseFirestore.instance.collection('users').doc(uuid).set({
+        await FirebaseFirestore.instance.collection('usuarios').doc(uuid).set({
           'login': _controllerLogin.text,
           'nome': _controllerNome.text,
           'email': _controllerEmail.text.trim(),
-        }); 
+        });
 
-
-        await userCredential.user!.updateDisplayName(_controllerLogin.text); 
+        await userCredential.user!.updateDisplayName(_controllerLogin.text);
         // --- CHECAGEM DE SEGURANÇA (mounted) ---
         // Verifica se a tela ainda existe antes de tentar fechá-la ou navegar.
         // Isso resolve o aviso "Don't use BuildContext across async gaps".
@@ -129,7 +129,6 @@ String? validatorNome(String? value) {
           context,
           MaterialPageRoute(builder: (_) => const LoginPage()),
         );
-
       } catch (e) {
         // Se der erro, precisamos fechar o loading primeiro
         if (mounted && Navigator.canPop(context)) {
@@ -147,7 +146,8 @@ String? validatorNome(String? value) {
         } else if (erroTexto.contains('invalid-email')) {
           mensagem = 'Email inválido.';
         } else {
-          mensagem = erroTexto; // Mostra o erro técnico caso não seja um dos acima
+          mensagem =
+              erroTexto; // Mostra o erro técnico caso não seja um dos acima
         }
 
         // Verifica mounted novamente antes de mostrar o SnackBar de erro
@@ -162,7 +162,6 @@ String? validatorNome(String? value) {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -181,10 +180,11 @@ String? validatorNome(String? value) {
                       children: [
                         const Text(
                           'Cadastre-se',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Campo Usuário
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -213,7 +213,7 @@ String? validatorNome(String? value) {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Campo Senha
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -229,7 +229,7 @@ String? validatorNome(String? value) {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Campo Repetir Senha
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -245,7 +245,7 @@ String? validatorNome(String? value) {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Campo Email
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -260,7 +260,7 @@ String? validatorNome(String? value) {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        
+
                         // Botões de Ação
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,

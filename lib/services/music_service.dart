@@ -45,8 +45,12 @@ class MusicService {
   }
 
   Future<void> uploadMusicaCompleto(dynamic dado, String nome) async {
+    
+    
     final user = FirebaseAuth.instance.currentUser;
+    
     if (user == null) return;
+    String nomeArtista = user.displayName ?? "Artista TaskList";
 
     String urlMusica;
 
@@ -89,6 +93,7 @@ class MusicService {
           .add({
         'nome': nome,
         'url': urlMusica,
+        'artista': nomeArtista, // <--- ADICIONE ISSO
         'criadoEm': Timestamp.now(),
       });
     } catch (e) {
@@ -114,4 +119,5 @@ class MusicService {
       }
     }
   }
+
 }

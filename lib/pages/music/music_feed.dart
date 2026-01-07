@@ -14,9 +14,9 @@ class MusicFeed extends StatefulWidget {
 class _MusicFeedState extends State<MusicFeed> {
   final CardSwiperController controller = CardSwiperController();
   final AudioPlayer _player = AudioPlayer();
-  
-  // Para controlar qual música está visível
-  int _currentIndex = 0;
+
+  // Variável para controlar visualmente se está tocando ou pausado
+  bool _isPlaying = true;
 
   @override
   void initState() {
@@ -29,15 +29,34 @@ class _MusicFeedState extends State<MusicFeed> {
 
   @override
   void dispose() {
-    _player.dispose(); // Para a música ao sair da tela
+    _player.dispose(); // Para a música ao sair da tela para não ficar tocando no fundo
     controller.dispose();
     super.dispose();
   }
 
-  // Função para tocar a música do cartão atual
+  // Função para carregar e tocar a música do zero (Auto-play)
   void _tocarPreview(String url) async {
     await _player.stop();
     await _player.play(UrlSource(url));
+    if (mounted) {
+      setState(() {
+        _isPlaying = true;
+      });
+    }
+  }
+
+  // Função para o botão de Play/Pause no meio do cartão
+  void _togglePlayPause() async {
+    if (_isPlaying) {
+      await _player.pause();
+    } else {
+      await _player.resume();
+    }
+    if (mounted) {
+      setState(() {
+        _isPlaying = !_isPlaying;
+      });
+    }
   }
 
   @override
@@ -46,56 +65,95 @@ class _MusicFeedState extends State<MusicFeed> {
     var musicas = appState.feedMusicas;
 
     if (musicas.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: Colors.deepPurple),
+              const SizedBox(height: 20),
+              const Text(
+                "Procurando novos beats...",
+                style: TextStyle(color: Colors.white70),
+              ),
+              // Botão para recarregar caso a lista acabe
+              TextButton(
+                onPressed: () => appState.carregarFeedGlobal(),
+                child: const Text("Recarregar"),
+              )
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
-      backgroundColor: Colors.black, // Estilo "Dark Mode" de balada
+      backgroundColor: Colors.black, // Estilo "Dark Mode"
       body: SafeArea(
         child: Column(
           children: [
             const Padding(
               padding: EdgeInsets.all(16.0),
-              child: Text("Descobrir", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              child: Text("Descobrir",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold)),
             ),
-            
+
             Expanded(
               child: CardSwiper(
                 controller: controller,
                 cardsCount: musicas.length,
-                numberOfCardsDisplayed: 3, // Efeito de pilha
-                
+                numberOfCardsDisplayed: 3, // Efeito de pilha de cartas
+
                 // O que acontece quando arrasta (Like/Dislike)
                 onSwipe: (previousIndex, currentIndex, direction) {
-                  _player.stop(); // Para a música anterior
+                  _player.stop();
                   
-                  // Se for para a direita, é Like!
+                  // Reseta o ícone para play enquanto carrega a próxima
+                  setState(() { _isPlaying = false; }); 
+
+                  final musicaAtual = musicas[previousIndex];
+
                   if (direction == CardSwiperDirection.right) {
-                    print("Curtiu a música: ${musicas[previousIndex].titulo}");
-                    // Aqui você colocaria a lógica de salvar nos favoritos
+                    // LIKE (Direita) -> Salva
+                    context.read<MyAppState>().curtirMusica(musicaAtual);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Salvo em seus Beats! ❤️"),
+                        duration: Duration(seconds: 1),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else if (direction == CardSwiperDirection.left) {
+                    // DISLIKE (Esquerda) -> Oculta
+                    context.read<MyAppState>().descurtirMusica(musicaAtual);
                   }
-                  
+
                   // Toca a próxima música (se houver)
                   if (currentIndex != null && currentIndex < musicas.length) {
-                     _tocarPreview(musicas[currentIndex].musicPath);
+                    _tocarPreview(musicas[currentIndex].musicPath);
                   }
-                  
                   return true;
                 },
-                
+
                 // Desenha o Cartão
                 cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
                   final musica = musicas[index];
-                  // Toca a primeira música automaticamente
-                  if (index == 0 && _player.state != PlayerState.playing) {
-                     _tocarPreview(musica.musicPath);
+                  
+                  // Toca a primeira música automaticamente se o player estiver parado
+                  // e for o primeiro card da pilha
+                  if (index == 0 && _player.state != PlayerState.playing && _player.state != PlayerState.paused) {
+                    _tocarPreview(musica.musicPath);
                   }
 
                   return _buildCard(musica);
                 },
               ),
             ),
-            
+
             // Botões de Ação na parte inferior
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -106,13 +164,13 @@ class _MusicFeedState extends State<MusicFeed> {
                     heroTag: "dislike",
                     backgroundColor: Colors.red,
                     onPressed: () => controller.swipe(CardSwiperDirection.left),
-                    child: const Icon(Icons.close, color: Colors.white),
+                    child: const Icon(Icons.close, color: Colors.white, size: 30),
                   ),
-                   FloatingActionButton(
+                  FloatingActionButton(
                     heroTag: "like",
                     backgroundColor: Colors.green, // Cor do "Like"
                     onPressed: () => controller.swipe(CardSwiperDirection.right),
-                    child: const Icon(Icons.favorite, color: Colors.white),
+                    child: const Icon(Icons.favorite, color: Colors.white, size: 30),
                   ),
                 ],
               ),
@@ -126,49 +184,106 @@ class _MusicFeedState extends State<MusicFeed> {
   Widget _buildCard(Music musica) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[900],
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-        boxShadow: [
-          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 5))
-        ]
+        // Gradiente bonito para o fundo do cartão
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.blueGrey[900]!, Colors.black],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54, 
+            blurRadius: 10, 
+            offset: Offset(0, 5)
+          )
+        ],
+        border: Border.all(color: Colors.white10),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          // Capa do Álbum (Simulada com Ícone por enquanto)
-          Expanded(
+          // 1. Ícone de fundo (decoração)
+          Center(
+            child: Icon(Icons.music_note, size: 150, color: Colors.white.withOpacity(0.05)),
+          ),
+
+          // 2. Botão de Play/Pause Centralizado
+          Center(
+            child: GestureDetector(
+              onTap: _togglePlayPause,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black45,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white30, width: 2),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)
+                  ]
+                ),
+                child: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow_rounded,
+                  size: 60,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Informações da música na base do cartão
+          Align(
+            alignment: Alignment.bottomLeft,
             child: Container(
-              margin: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey[800],
-                borderRadius: BorderRadius.circular(20),
+              width: double.infinity,
+              padding: const EdgeInsets.all(24.0),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black, Colors.transparent],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20)
+                )
               ),
-              child: const Center(
-                child: Icon(Icons.music_note, size: 100, color: Colors.white54),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    musica.titulo,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.blueAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        musica.artista,
+                        style: const TextStyle(
+                          color: Colors.blueAccent, 
+                          fontSize: 18, 
+                          fontWeight: FontWeight.w500
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Toque no centro para pausar",
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                  )
+                ],
               ),
             ),
           ),
-          
-          // Informações
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                Text(
-                  musica.titulo,
-                  style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Artista Desconhecido", // Você pode adicionar campo 'artista' no Firebase depois
-                  style: TextStyle(color: Colors.white54, fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 40), // Espaço para não ficar em cima dos botões
         ],
       ),
     );
