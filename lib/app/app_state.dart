@@ -51,10 +51,13 @@ class MyAppState extends ChangeNotifier {
 //musicas
   bool estaCarregandoMusica = false;
 
+  var feedMusicas = <Music>[];
   void setCarregando(bool valor) {
     estaCarregandoMusica = valor;
     notifyListeners();
   }
+
+  // No MyAppState em app_state.dart
 
   Future<void> carregarMusicasDoFirebase() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -79,6 +82,53 @@ class MyAppState extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  Future<void> carregarFeedGlobal() async {
+    try {
+      // collectionGroup busca em todas as subcoleções chamadas 'playlist'
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('playlist')
+          .limit(20) // Limita para não gastar muita banda
+          .get();
+
+      feedMusicas.clear();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        feedMusicas.add(
+          Music(
+            id: doc.id,
+            titulo: data['nome'] ?? 'Sem título',
+            musicPath: data['url'] ?? '',
+          ),
+        );
+      }
+
+      // Avisa as telas que a lista de feed mudou
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao carregar feed: $e");
+    }
+  }
+
+// 3. O método para dar Like (Favoritar)
+  Future<void> curtirMusica(Music musica) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(user.uid)
+        .collection('playlist') // Salva na playlist pessoal do usuário
+        .add({
+      'nome': musica.titulo,
+      'url': musica.musicPath,
+      'curtidoEm': Timestamp.now(),
+    });
+
+    // Opcional: recarrega a lista local de tarefas/músicas se necessário
+    carregarMusicasDoFirebase();
   }
 
 //usuario

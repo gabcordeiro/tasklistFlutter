@@ -6,6 +6,7 @@ import 'package:tasklist/pages/anotation/anotation_list_view.dart';
 import 'package:tasklist/pages/favorites_page.dart';
 import 'package:tasklist/pages/generator_page.dart';
 import 'package:tasklist/pages/loginCadastro/login_page.dart';
+import 'package:tasklist/pages/music/music_feed.dart';
 import 'package:tasklist/pages/music/music_list.dart';
 import 'package:tasklist/pages/music/music_upload.dart';
 import 'package:tasklist/pages/tarefas_page.dart';
@@ -84,6 +85,9 @@ void initState() {
         break;
       case 6:
         page = MusicUpload();
+        break;
+      case 7:
+        page = MusicFeed();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -170,6 +174,10 @@ void initState() {
                     NavigationRailDestination(
                       icon: Icon(Icons.featured_play_list),
                       label: Text('Fazer Upload de Beats'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.feed),
+                      label: Text('Feed de Beats'),
                     ),
                   ],
                   selectedIndex: selectedIndex,
