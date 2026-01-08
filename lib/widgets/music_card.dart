@@ -1,109 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
+import 'package:tasklist/models/models.dart';
 
-class MusicCard extends StatefulWidget {
+class MusicCard extends StatelessWidget {
   final Music musica;
+  final bool isMyUpload; // <--- NOVA PROPRIEDADE
 
-  const MusicCard({super.key, required this.musica});
-
-  @override
-  State<MusicCard> createState() => _MusicCardState();
-}
-
-class _MusicCardState extends State<MusicCard> {
-  final AudioPlayer _player = AudioPlayer();
-  bool _isPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Listener para detectar quando a música acabar sozinha
-    _player.onPlayerComplete.listen((event) {
-      if (mounted) {
-        setState(() {
-          _isPlaying = false;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _player.dispose(); // Limpeza de memória
-    super.dispose();
-  }
-
-  Future<void> _togglePlay() async {
-    try {
-      if (_isPlaying) {
-        await _player.stop();
-      } else {
-        // widget.musica.musicPath contém a URL do Cloudinary salva no Firestore
-        await _player.play(UrlSource(widget.musica.musicPath));
-      }
-
-      if (mounted) {
-        setState(() {
-          _isPlaying = !_isPlaying;
-        });
-      }
-    } catch (e) {
-      debugPrint("Erro ao reproduzir áudio: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erro ao carregar o áudio.")),
-        );
-      }
-    }
-  }
+  const MusicCard({
+    super.key, 
+    required this.musica, 
+    required this.isMyUpload
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.titleMedium!.copyWith(
-      color: theme.colorScheme.onSecondaryContainer,
-      fontWeight: FontWeight.bold,
-    );
+    var appState = context.read<MyAppState>();
 
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.stop_circle : Icons.play_circle_fill,
-                size: 45,
-                color: _isPlaying ? Colors.red : Colors.blue,
-              ),
-              onPressed: _togglePlay,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.grey[900],
+      child: ListTile(
+        leading: Icon(isMyUpload ? Icons.cloud_done : Icons.favorite, color: Colors.pinkAccent),
+        title: Text(musica.titulo, style: const TextStyle(color: Colors.white)),
+        subtitle: Text(musica.artista, style: const TextStyle(color: Colors.white70)),
+        trailing: PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white70),
+          onSelected: (value) {
+            if (value == 'remover') {
+              if (isMyUpload) {
+                appState.deletarMusica(musica); // Deleta o post original
+              } else {
+                appState.removerDosCurtidos(musica); // Tira dos favoritos e volta pro feed
+              }
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'remover',
+              child: Row(
                 children: [
-                  Text(
-                    widget.musica.titulo,
-                    style: style,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _isPlaying ? "Reproduzindo..." : "Toque para reproduzir",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  Icon(Icons.delete, color: isMyUpload ? Colors.red : Colors.orange),
+                  const SizedBox(width: 8),
+                  Text(isMyUpload ? 'Excluir Postagem' : 'Remover dos Salvos'),
                 ],
               ),
-            ),
-            IconButton(
-              onPressed: () {
-                // Futura implementação de menu (deletar, etc)
-              },
-              icon: const Icon(Icons.more_vert, color: Colors.grey),
             ),
           ],
         ),

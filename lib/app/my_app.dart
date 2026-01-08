@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
-import 'package:tasklist/pages/loginCadastro/cadastrar_page.dart';
 import 'package:tasklist/pages/loginCadastro/login_page.dart';
 
 class MyApp extends StatelessWidget {

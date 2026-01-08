@@ -30,7 +30,7 @@ class _TarefasPageState extends State<TarefasPage> {
         },
         padding: const EdgeInsets.all(16),
         children: [
-          for (final tarefaObj
+          for (final tarefaObj 
               in appState.listaTarefas) // tarefaObj agora é um objeto
             BigCardTarefa(
               // CORREÇÃO DO ERRO:
@@ -38,7 +38,10 @@ class _TarefasPageState extends State<TarefasPage> {
               key: ValueKey(tarefaObj.id),
 
               // O texto a gente pega da propriedade titulo
-              texto: tarefaObj.titulo,
+              titulo: tarefaObj.titulo,
+              onRemove: () {
+                appState.removeTarefa(tarefaObj);
+              },
             ),
         ],
       ),

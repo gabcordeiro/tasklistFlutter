@@ -11,19 +11,28 @@ class MusicList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    var musicas = appState.listamusicas;
+
+    // Filtramos para mostrar apenas músicas onde o artista é "Você"
+    // ou que não foram marcadas como vindas do feed.
+    var meusUploads =
+        appState.listamusicas.where((m) => m.artista == 'Você').toList();
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Meus Beats Postados"),
+        backgroundColor: Colors.black,
+      ),
+      backgroundColor: Colors.black,
       body: RefreshIndicator(
         onRefresh: () => appState.carregarMusicasDoFirebase(),
-        child: musicas.isEmpty
+        child: meusUploads.isEmpty
             ? _buildEmptyState(context)
             : ListView.builder(
                 padding: const EdgeInsets.only(top: 10, bottom: 80),
-                itemCount: musicas.length,
+                itemCount: meusUploads.length,
                 itemBuilder: (context, index) {
-                  final musica = musicas[index];
-                  return MusicCard(musica: musica);
+                  final musica = meusUploads[index];
+                  return MusicCard(musica: musica,isMyUpload: true);
                 },
               ),
       ),
@@ -32,7 +41,8 @@ class MusicList extends StatelessWidget {
 
   // Widget para quando não houver músicas
   Widget _buildEmptyState(BuildContext context) {
-    return ListView( // Usamos ListView para o RefreshIndicator funcionar
+    return ListView(
+      // Usamos ListView para o RefreshIndicator funcionar
       children: [
         SizedBox(height: MediaQuery.of(context).size.height * 0.3),
         const Center(

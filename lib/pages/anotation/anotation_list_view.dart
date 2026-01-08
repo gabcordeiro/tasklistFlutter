@@ -29,12 +29,12 @@ class _AnotationListState extends State<AnotationList> {
                 appState.reorderTarefa(oldIndex, newIndex);
               },
               children: [for (final anotation in appState.listaAnotation)
-                BigCardTarefa(key: ValueKey(anotation.id),texto: anotation.titulo)
+                BigCardTarefa(key: ValueKey(anotation.id),titulo: anotation.titulo, onRemove: () {  }, )
               ]
             ),
         ),],
         ),
       ),
-      ));;
+      ));
   }
 }

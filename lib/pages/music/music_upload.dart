@@ -1,4 +1,3 @@
-// No MusicUpload.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
@@ -9,35 +8,73 @@ class MusicUpload extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Escuta o AppState
     var appState = context.watch<MyAppState>();
-    var musicService = MusicService(); // Instancia o service
+    var musicService = MusicService();
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.music_note, size: 100, color: Colors.blue),
-          SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () async {
-              // 1. Seleciona
-              final arquivo = await musicService.selecionarMusic();
-              if (arquivo != null) {
-                // 2. Processa e sobe (o Service já faz a lógica de Web/Android)
-                await musicService.processarUpload(arquivo);
-                
-                // 3. Atualiza a lista após o upload
-                await appState.carregarMusicasDoFirebase();
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Upload concluído!")),
-                );
-              }
-            },
-            icon: Icon(Icons.upload_file),
-            label: Text("Selecionar e Enviar Música"),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Indicador Visual
+            appState.estaCarregandoMusica
+                ? const CircularProgressIndicator()
+                : const Icon(Icons.cloud_upload_outlined, size: 80, color: Colors.blue),
+
+            const SizedBox(height: 20),
+
+            // Botão de Upload
+            ElevatedButton.icon(
+              onPressed: appState.estaCarregandoMusica
+                  ? null // Desabilita se estiver carregando
+                  : () async {
+                      // 1. Seleciona o arquivo
+                      final arquivo = await musicService.selecionarMusic();
+
+                      if (arquivo != null) {
+                        try {
+                          // 2. Ativa o loading na tela
+                          appState.setCarregando(true);
+
+                          // 3. Processa: Comprime (se mobile) -> Upload Cloudinary -> Salva Firestore
+                          await musicService.processarUpload(arquivo);
+
+                          // 4. Atualiza a lista local baixando do Firestore novamente
+                          await appState.carregarMusicasDoFirebase();
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Música enviada com sucesso!"),
+                                  backgroundColor: Colors.green),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text("Erro no upload: $e"),
+                                  backgroundColor: Colors.red),
+                            );
+                          }
+                        } finally {
+                          // 5. Desativa o loading
+                          appState.setCarregando(false);
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.upload_file),
+              label: Text(appState.estaCarregandoMusica
+                  ? "Processando..."
+                  : "Selecionar e Enviar Música"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

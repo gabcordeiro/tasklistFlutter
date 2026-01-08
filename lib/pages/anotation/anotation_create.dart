@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tasklist/app/app_state.dart';
-import 'package:tasklist/app/my_app.dart';
 
 class AnotationCreate extends StatefulWidget {
   const AnotationCreate({super.key});

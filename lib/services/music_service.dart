@@ -1,3 +1,5 @@
+// ARQUIVO: lib/services/music_service.dart
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ffmpeg_kit_flutter_audio/return_code.dart';
 import 'package:file_picker/file_picker.dart';
@@ -5,19 +7,17 @@ import 'package:ffmpeg_kit_flutter_audio/ffmpeg_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:typed_data';
-import 'dart:io';
 import 'package:cloudinary_public/cloudinary_public.dart';
 
 class MusicService {
-  // Configuração do seu Cloudinary
-  final cloudinary =
-      CloudinaryPublic('drbbiae6f', 'projeto_musica', cache: false);
+  // ATENÇÃO: Em produção, evite deixar keys hardcoded. Use variáveis de ambiente (.env)
+  final cloudinary = CloudinaryPublic('drbbiae6f', 'projeto_musica', cache: false);
 
+  // Selecionar arquivo (Audio)
   Future<PlatformFile?> selecionarMusic() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.audio,
-      withData: true, // Essencial para funcionar no Chrome/Web
+      withData: true, // Essencial para Web
     );
 
     if (result != null) {
@@ -26,12 +26,13 @@ class MusicService {
     return null;
   }
 
+  // Comprimir Audio (Apenas Mobile)
   Future<String?> comprimirMusic(String pathOriginal) async {
     final diretorioTemp = await getTemporaryDirectory();
     final caminhoComprimido =
         '${diretorioTemp.path}/comprimido_${DateTime.now().millisecondsSinceEpoch}.mp3';
 
-    // Comando FFmpeg para reduzir o bitrate para 128k
+    // Comando FFmpeg: reduz bitrate para 128k (mp3)
     final comandoFFmpeg = '-i "$pathOriginal" -b:a 128k "$caminhoComprimido"';
 
     final session = await FFmpegKit.execute(comandoFFmpeg);
@@ -40,52 +41,46 @@ class MusicService {
     if (ReturnCode.isSuccess(returnCode)) {
       return caminhoComprimido;
     } else {
+      debugPrint("Falha na compressão do áudio.");
       return null;
     }
   }
 
+  // Upload para Cloudinary e Salvar no Firestore
   Future<void> uploadMusicaCompleto(dynamic dado, String nome) async {
-    
-    
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("Usuário não logado");
     
-    if (user == null) return;
     String nomeArtista = user.displayName ?? "Artista TaskList";
-
     String urlMusica;
 
     try {
       CloudinaryResponse response;
 
-      // Realiza o upload para o Cloudinary dependendo do tipo de dado
+      // Web usa bytes, Mobile usa path
       if (dado is Uint8List) {
-        // Fluxo Web
         response = await cloudinary.uploadFile(
           CloudinaryFile.fromBytesData(
             dado,
             identifier: nome,
-            resourceType:
-                CloudinaryResourceType.Video, // Áudio é tratado como vídeo
+            resourceType: CloudinaryResourceType.Video, // Audio é 'Video' no Cloudinary
           ),
         );
       } else if (dado is String) {
-        // Fluxo Android
         response = await cloudinary.uploadFile(
           CloudinaryFile.fromFile(
             dado,
             identifier: nome,
-            resourceType:
-                CloudinaryResourceType.Video, // Áudio é tratado como vídeo
+            resourceType: CloudinaryResourceType.Video,
           ),
         );
       } else {
-        throw "Tipo de dado inválido para upload";
+        throw Exception("Tipo de dado inválido para upload");
       }
 
-      // URL final do áudio hospedado
       urlMusica = response.secureUrl;
 
-      // Salva a referência (link) no Firestore para listar na UI
+      // Salva referência no Firestore
       await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(user.uid)
@@ -93,31 +88,36 @@ class MusicService {
           .add({
         'nome': nome,
         'url': urlMusica,
-        'artista': nomeArtista, // <--- ADICIONE ISSO
+        'artista': nomeArtista,
         'criadoEm': Timestamp.now(),
+        'origem': 'upload_proprio'
       });
+      
     } catch (e) {
-      debugPrint("Erro no upload para Cloudinary: $e");
+      debugPrint("Erro no upload: $e");
       rethrow;
     }
   }
 
+  // Fachada para processar o fluxo dependendo da plataforma
   Future<void> processarUpload(PlatformFile arquivo) async {
     if (kIsWeb) {
-      // No Web usamos os bytes diretamente
       final bytes = arquivo.bytes;
       if (bytes != null) {
         await uploadMusicaCompleto(bytes, arquivo.name);
       }
     } else {
-      // No Android usamos o path e comprimimos com FFmpeg
       if (arquivo.path != null) {
+        String pathParaUpload = arquivo.path!;
+        
+        // Tenta comprimir
         String? pathComprimido = await comprimirMusic(arquivo.path!);
-        // Se a compressão falhar, tentamos subir o original como fallback
-        await uploadMusicaCompleto(
-            pathComprimido ?? arquivo.path!, arquivo.name);
+        if (pathComprimido != null) {
+          pathParaUpload = pathComprimido;
+        }
+
+        await uploadMusicaCompleto(pathParaUpload, arquivo.name);
       }
     }
   }
-
 }
